@@ -30,6 +30,7 @@ model_results = read_pkzip('data/model_results.pk.zip')
 # init dash app
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+server = app.server
 
 # main html
 
