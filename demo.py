@@ -11,18 +11,21 @@ import dash_bootstrap_components as dbc
 
 import numpy as np
 import pickle as pk
+import zipfile
+
 
 # load figures
 
-with open('figs/fig1_tsne.pk', 'rb') as _:
-    fig1 = pk.load(_)
+def read_pkzip(f):
+    with zipfile.ZipFile(f) as zf:
+        data = pk.load(zf.open(f.strip('.zip').split('/')[-1]))
+    return data
 
-with open('figs/fig2_performance.pk', 'rb') as _:
-    fig2_performance = pk.load(_)
-    fig2_svm, fig2_knn, fig2_xgb = [fig2_performance[i] for i in fig2_performance.keys()]
+fig1 = read_pkzip('figs/fig1_tsne.pk.zip')
+fig2_performance = read_pkzip('figs/fig2_performance.pk.zip')
+fig2_svm, fig2_knn, fig2_xgb = [fig2_performance[i] for i in fig2_performance.keys()]
+model_results = read_pkzip('data/model_results.pk.zip')
 
-with open('data/model_results.pk', 'rb') as _:
-    model_results = pk.load(_)
 
 # init dash app
 
@@ -35,50 +38,50 @@ html.Div([
 
     dcc.Markdown('''
     # MNIST Dash demo
-    
+
     In this demo, we explore machine learning classification of MNIST. MNIST is a database of handwritten digits which have been size-normalized in a fixed-size image (28x28 pixels). This dataset is commonly used to demonstrate both statistical and machine learning concepts.
     '''),
     html.Div([], style={'width': '800px', 'height': '300px', 'margin': 'auto', 'background-image': 'url("https://miro.medium.com/max/1400/1*LyRlX__08q40UJohhJG9Ow.png")'}),
-    
+
     dcc.Markdown('''
     Our goal is to implement classification of the digits on the MNIST dataset using non-deep leaning methods. To accomplish this, we first reduce the overall dimensionality of the 28x28 handwritten images by centering the data; this refers to reducing the overall number of input features (784 image pixels) to a representation of 56 (row + column) summed pixel intensity values. The reasoning behind this simplification is to reduce the complexity and greatly reduce the training time of the models. We apply three different models, support vector machine, k-nearest neighbors, and xgboost on the processed MNIST data.
-    
-    '''), 
-    
+
+    '''),
+
     dcc.Markdown('''
     ### Data visualization and model performance
-    
+
     To visualize the data, we apply a t-SNE dimensionality reduction to project the 56 input features into three dimensions. By doing so, we can now understand the scope of how each handwritten digit relate to one another.
-    
+
     To visualize the resulting classification performance, the heatmap shows the number of correctly- and mis-classified digits. Hover over a cell to show the total number of classifications for a specific digit.
-    
-    '''), 
-    
+
+    '''),
+
     # tsne
     dcc.Graph(figure=fig1, style={'width': '600px', 'height': '600px', 'display': 'inline-block'}),
-    
+
     # performance matrix
     html.Div([
         dcc.Graph(id='graph'),
         dcc.Dropdown(id='input', options=[{'label': 'SVM', 'value': 'svm'}, {'label': 'KNN', 'value': 'knn'}, {'label': 'XGBoost', 'value': 'xgboost'}],
                      value='svm')
     ], style={'width': '450px', 'height': '600px', 'display': 'inline-block'}),
-    
+
     # prediction input
     html.Div([
         dcc.Markdown('''
         ### Testing the models
-        
+
         To test our models, please input a number into the canvas space. This input data is first converted to the correct feature size (28x28) and then a gaussian blur is applied to liken the image to those of the MNIST dataset. Although accuracy and precision is above 90% for all three models when applied to the MNIST test set, the output generated from the canvas may not reflect that. This is likely due to the canvas digit input’s dissimilarity from the strictly processed MNIST digits.
-        
+
         ''', style={'display': 'inline-block'}),
-        
+
         html.Div([
             DashCanvas(id='canvas', lineWidth=12, width=224, height=224, hide_buttons=['zoom', 'pan', 'line', 'redo', 'pencil', 'rectangle', 'select'], lineColor='black', goButtonTitle='Predict'),
             dcc.Markdown(id='predictions')],
             style={'height': '500px', 'width': '500px', 'margin': 'auto', 'margin-right': '200px'})
         ])
-    
+
     # prediction output
 
 ], style={'width': '1200px', 'margin': 'auto', 'margin-top': '50px'}),
